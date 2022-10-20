@@ -22,6 +22,7 @@ def create_app(test_config=None):
     @TODO: Use the after_request decorator to set Access-Control-Allow
     """
     @app.after_request
+
     def after_request(response):
         response.headers.add("Access-Control-Allow-Header",
                              "Content-Type, Authorization, true")
@@ -33,7 +34,7 @@ def create_app(test_config=None):
     Create an endpoint to handle GET requests
     for all available categories.
     """
-    def paginate_questions(request, selection):
+    def paginations(request, selection):
         page = request.args.get('page', 1, type=int)
         start = (page - 1) * QUESTIONS_PER_PAGE
         end = start + QUESTIONS_PER_PAGE
@@ -43,6 +44,7 @@ def create_app(test_config=None):
         return current_questions
 
     @app.route('/categories', methods=['GET'])
+
     def get_categories():
         categories = Category.query.all()
         formated_categories = {
@@ -69,10 +71,11 @@ def create_app(test_config=None):
     Clicking on the page numbers should update the questions.
     """
     @app.route('/questions', methods=['GET'])
+
     def get_questions():
         questions = Question.query.order_by(Question.id).all()
         categories = Category.query.all()
-        current_questions = paginate_questions(request, questions)
+        current_questions = paginations(request, questions)
         formated_categories = {
             category.id: category.type for category in categories}
 
@@ -93,6 +96,7 @@ def create_app(test_config=None):
     This removal will persist in the database and when you refresh the page.
     """
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
+
     def delete_question(question_id):
         try:
             question = Question.query.filter(
@@ -121,13 +125,14 @@ def create_app(test_config=None):
     of the questions list in the "List" tab.
     """
     @app.route('/questions', methods=['POST'])
-    def add_question():
-        body = request.get_json()
 
-        new_question = body.get('question')
-        new_answer = body.get('answer', '')
-        new_difficulty = body.get('difficulty', '')
-        new_category = body.get('category', '')
+    def add_question():
+        data = request.get_json()
+
+        new_question = data.get('question')
+        new_answer = data.get('answer', '')
+        new_difficulty = data.get('difficulty', '')
+        new_category = data.get('category', '')
 
         if ((new_question == '') or (new_answer == '') or (new_difficulty == '') or (new_category == '')):
             abort(422)
@@ -154,18 +159,19 @@ def create_app(test_config=None):
     Try using the word "title" to start.
     """
     @app.route('/questions/search', methods=['POST'])
-    def search_questions():
-        body = request.get_json()
-        searchTerm = body.get('searchTerm', None)
 
-        if searchTerm:
-            search_results = Question.query.filter(
-                Question.question.ilike('%'+searchTerm+'%')).all()
+    def search_questions():
+        data = request.get_json()
+        term = data.get('searchTerm', None)
+
+        if term:
+            results = Question.query.filter(
+                Question.question.ilike('%'+term+'%')).all()
 
             return jsonify({
                 'success': True,
-                'questions': [question.format() for question in search_results],
-                'total_questions': len(search_results),
+                'questions': [question.format() for question in results],
+                'total_questions': len(results),
                 'current_category': None
             })
         abort(404)
@@ -178,6 +184,7 @@ def create_app(test_config=None):
     category to be shown.
     """
     @app.route('/categories/<int:id>/questions', methods=['GET'])
+
     def get_questions_by_category(id):
         questions = Question.query.filter(
             Question.category == id).all()
@@ -204,14 +211,15 @@ def create_app(test_config=None):
     and shown whether they were correct or not.
     """
     @app.route('/quizzes', methods=['POST'])
-    def get_quiz_questions():
-        body = request.get_json()
 
-        if not ('previous_questions' in body and 'quiz_category' in body):
+    def get_quiz_questions():
+        data = request.get_json()
+
+        if not ('previous_questions' in data and 'quiz_category' in data):
             abort(422)
 
-        previous_questions = body.get('previous_questions')
-        category = body.get('quiz_category')
+        previous_questions = data.get('previous_questions')
+        category = data.get('quiz_category')
 
         if category['type'] == 'click':
             questions = Question.query.filter(
@@ -237,6 +245,7 @@ def create_app(test_config=None):
     including 404 and 422.
     """
     @app.errorhandler(400)
+
     def bad_request(error):
         return jsonify({
             'success': False,
@@ -245,6 +254,7 @@ def create_app(test_config=None):
         })
 
     @app.errorhandler(404)
+
     def not_found(error):
         return jsonify({
             'success': False,
@@ -253,6 +263,7 @@ def create_app(test_config=None):
         }), 404
 
     @app.errorhandler(405)
+
     def request_not_allowed(error):
         return jsonify({
             'success': False,
@@ -261,6 +272,7 @@ def create_app(test_config=None):
         })
 
     @app.errorhandler(422)
+
     def unprocesable_request(error):
         return jsonify({
             'success': False,
@@ -269,6 +281,7 @@ def create_app(test_config=None):
         })
 
     @app.errorhandler(500)
+    
     def server_error(error):
         return jsonify({
             'success': False,
